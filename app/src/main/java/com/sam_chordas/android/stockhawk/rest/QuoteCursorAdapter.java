@@ -1,11 +1,14 @@
 package com.sam_chordas.android.stockhawk.rest;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.os.Build;
+import android.preference.PreferenceManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -29,6 +32,7 @@ public class QuoteCursorAdapter extends CursorRecyclerViewAdapter<QuoteCursorAda
   private static Context mContext;
   private static Typeface robotoLight;
   private boolean isPercent;
+  private boolean activeDb;
   public QuoteCursorAdapter(Context context, Cursor cursor){
     super(context, cursor);
     mContext = context;
@@ -69,6 +73,21 @@ public class QuoteCursorAdapter extends CursorRecyclerViewAdapter<QuoteCursorAda
       viewHolder.change.setText(cursor.getString(cursor.getColumnIndex("percent_change")));
     } else{
       viewHolder.change.setText(cursor.getString(cursor.getColumnIndex("change")));
+    }
+    if (viewHolder.symbol == null){
+
+      activeDb = false;
+      SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(mContext);
+      sharedPreferences.edit().putBoolean("activeDb", activeDb).commit();
+      Log.i("Symbol: ", "null");
+
+    }
+    else if(viewHolder.symbol != null){
+
+      activeDb = true;
+      SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(mContext);
+      sharedPreferences.edit().putBoolean("activeDb", activeDb).commit();
+      Log.i("Symbol: ", "not null");
     }
   }
 

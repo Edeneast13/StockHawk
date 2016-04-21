@@ -5,9 +5,11 @@ import android.content.Context;
 import android.content.CursorLoader;
 import android.content.Intent;
 import android.content.Loader;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.app.ActionBar;
 import android.os.Bundle;
@@ -19,6 +21,7 @@ import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.TextView;
 import android.widget.Toast;
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.sam_chordas.android.stockhawk.R;
@@ -52,6 +55,8 @@ public class MyStocksActivity extends AppCompatActivity implements LoaderManager
   private Context mContext;
   private Cursor mCursor;
   boolean isConnected;
+  private TextView mEmptyTextView;
+  private boolean activeDb;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
@@ -64,6 +69,10 @@ public class MyStocksActivity extends AppCompatActivity implements LoaderManager
     isConnected = activeNetwork != null &&
         activeNetwork.isConnectedOrConnecting();
     setContentView(R.layout.activity_my_stocks);
+
+    mEmptyTextView = (TextView)findViewById(R.id.empty_textview);
+    //mEmptyTextView.setVisibility(View.INVISIBLE);
+
     // The intent service is for executing immediate pulls from the Yahoo API
     // GCMTaskService can only schedule tasks, they cannot execute immediately
     mServiceIntent = new Intent(this, StockIntentService.class);
@@ -71,9 +80,24 @@ public class MyStocksActivity extends AppCompatActivity implements LoaderManager
       // Run the initialize task service so that some stocks appear upon an empty database
       mServiceIntent.putExtra("tag", "init");
       if (isConnected){
-        startService(mServiceIntent);
+
+        if(mServiceIntent != null){
+
+          startService(mServiceIntent);
+        }
       } else{
+        mEmptyTextView.setVisibility(View.VISIBLE);
         networkToast();
+      }
+
+      SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+      activeDb = sharedPreferences.getBoolean("activeDb", false);
+
+      if(activeDb == true){
+        mEmptyTextView.setVisibility(View.INVISIBLE);
+      }
+      else if(activeDb == false){
+        mEmptyTextView.setVisibility(View.VISIBLE);
       }
     }
     RecyclerView recyclerView = (RecyclerView) findViewById(R.id.recycler_view);
@@ -83,7 +107,8 @@ public class MyStocksActivity extends AppCompatActivity implements LoaderManager
     mCursorAdapter = new QuoteCursorAdapter(this, null);
     recyclerView.addOnItemTouchListener(new RecyclerViewItemClickListener(this,
             new RecyclerViewItemClickListener.OnItemClickListener() {
-              @Override public void onItemClick(View v, int position) {
+              @Override
+              public void onItemClick(View v, int position) {
                 //TODO:
                 // do something on item click
               }

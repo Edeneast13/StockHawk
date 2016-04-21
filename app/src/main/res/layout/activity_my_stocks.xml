@@ -27,4 +27,13 @@
       fab:layout_anchor="recycler_view"
       fab:layout_anchorGravity="bottom | end"
       />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/empty_textview"
+        android:padding="16dp"
+        android:gravity="center_horizontal"
+        android:text="@string/no_network_message"/>
+
 </FrameLayout>

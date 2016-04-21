@@ -12,4 +12,6 @@
   <string name="network_toast">Uh-oh! This app requires an internet connection</string>
 
   <string name="stock_search_failure_toast">Oops, No such stock found</string>
+  <string name="no_network_message">Network currently unavailable. This app requires a
+  network connection to retrieve stocks. </string>
 </resources>
