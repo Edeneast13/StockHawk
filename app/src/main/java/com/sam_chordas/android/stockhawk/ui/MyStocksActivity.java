@@ -17,6 +17,7 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.helper.ItemTouchHelper;
 import android.text.InputType;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -71,7 +72,6 @@ public class MyStocksActivity extends AppCompatActivity implements LoaderManager
     setContentView(R.layout.activity_my_stocks);
 
     mEmptyTextView = (TextView)findViewById(R.id.empty_textview);
-    //mEmptyTextView.setVisibility(View.INVISIBLE);
 
     // The intent service is for executing immediate pulls from the Yahoo API
     // GCMTaskService can only schedule tasks, they cannot execute immediately
@@ -80,11 +80,7 @@ public class MyStocksActivity extends AppCompatActivity implements LoaderManager
       // Run the initialize task service so that some stocks appear upon an empty database
       mServiceIntent.putExtra("tag", "init");
       if (isConnected){
-
-        if(mServiceIntent != null){
-
           startService(mServiceIntent);
-        }
       } else{
         mEmptyTextView.setVisibility(View.VISIBLE);
         networkToast();
@@ -135,22 +131,33 @@ public class MyStocksActivity extends AppCompatActivity implements LoaderManager
                                 new String[]{input.toString()}, null);
                         if (c.getCount() != 0) {
                           Toast toast =
-                                  Toast.makeText(MyStocksActivity.this, "This stock is already saved!",
+                                  Toast.makeText(MyStocksActivity.this, getString(R.string.stock_already_saved_toast),
                                           Toast.LENGTH_LONG);
                           toast.setGravity(Gravity.CENTER, Gravity.CENTER, 0);
                           toast.show();
                           return;
                         }
-                        //when count returns as 0 a toast notifies the user that the entered stock does not exists
-                        if (c.getCount() == 0) {
+                         else {
+                                // Add the stock to DB
+                                mServiceIntent.putExtra("tag", "add");
+                                mServiceIntent.putExtra("symbol", input.toString());
+                                startService(mServiceIntent);
 
-                          Toast.makeText(getApplicationContext(), getString(R.string.stock_search_failure_toast),
-                                  Toast.LENGTH_LONG).show();
-                        } else {
-                          // Add the stock to DB
-                          mServiceIntent.putExtra("tag", "add");
-                          mServiceIntent.putExtra("symbol", input.toString());
-                          startService(mServiceIntent);
+                            SharedPreferences sharedPreferences = PreferenceManager
+                                    .getDefaultSharedPreferences(getApplicationContext());
+
+                            String gcmTest = sharedPreferences.getString("gcmTest", "");
+
+                            if(gcmTest != null){
+
+                                if(gcmTest.equals("failure")){
+
+                                    Toast.makeText(getApplicationContext(), R.string.stock_does_not_exist,
+                                            Toast.LENGTH_LONG).show();
+                                }
+                            }
+
+                            Log.i("GCMTEST: ", gcmTest);
                         }
                       }
                     })
@@ -259,5 +266,4 @@ public class MyStocksActivity extends AppCompatActivity implements LoaderManager
   public void onLoaderReset(Loader<Cursor> loader){
     mCursorAdapter.swapCursor(null);
   }
-
 }
