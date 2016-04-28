@@ -45,6 +45,7 @@
         android:paddingStart="3dp"
         android:paddingEnd="3dp"
         tools:text="100%"
+        android:layout_gravity="start|center_horizontal"
         />
   </LinearLayout>
 </LinearLayout>
