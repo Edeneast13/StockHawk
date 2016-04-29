@@ -2,9 +2,12 @@ package com.sam_chordas.android.stockhawk.ui;
 
 import android.content.Intent;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.app.Activity;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
+import android.widget.Toolbar;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
@@ -14,17 +17,28 @@ import com.android.volley.toolbox.JsonArrayRequest;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
 import com.github.mikephil.charting.charts.LineChart;
+import com.github.mikephil.charting.components.YAxis;
+import com.github.mikephil.charting.data.Entry;
+import com.github.mikephil.charting.data.LineData;
+import com.github.mikephil.charting.data.LineDataSet;
 import com.sam_chordas.android.stockhawk.R;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.ArrayList;
 import java.util.concurrent.ExecutionException;
 
-public class DetailActivity extends Activity {
+public class DetailActivity extends AppCompatActivity {
 
-    private LineChart mLineChart;
     private String mUrl;
     final String URL_SCHEME = "http";
     final String BASE_URL = "chartapi.finance.yahoo.com";
@@ -33,65 +47,162 @@ public class DetailActivity extends Activity {
     final String CHART_DATA_PATH = "chartdata";
     final String URL_PARAMS = ";type=close;range=1d/json";
     private String mSymbol;
-    private RequestQueue mRequestQueue;
+    private ArrayList<Entry> mEntries = new ArrayList<Entry>();
+    private ArrayList<String> mLabels = new ArrayList<String>();
+    private LineChart chart;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_detail);
 
-        mLineChart = (LineChart)findViewById(R.id.line_chart);
-        mRequestQueue = Volley.newRequestQueue(this);
+        chart = new LineChart(getApplicationContext());
+
+        setContentView(chart);
 
         Intent i = getIntent();
         mSymbol = i.getStringExtra("symbol");
+
+        getSupportActionBar().setTitle(mSymbol);
 
         Uri.Builder builder = new Uri.Builder();
         builder.scheme(URL_SCHEME)
                 .authority(BASE_URL)
                 .appendPath(INSTRUMENT_PATH)
                 .appendPath(VERSION_PATH)
-                .appendPath("goog")
+                .appendPath(mSymbol)
                 .appendPath(CHART_DATA_PATH);
 
         mUrl = builder.build().toString();
         mUrl = mUrl + URL_PARAMS;
 
         getJsonFromApi(mUrl);
-
     }
 
     public void getJsonFromApi(String url){
 
-        JsonObjectRequest request = new JsonObjectRequest(Request.Method.GET, mUrl, null,
-                new Response.Listener<JSONObject>() {
-                    @Override
-                    public void onResponse(JSONObject response) {
+        try {
 
-                        try {
-                            JSONArray array = response.getJSONArray("series");
+            FetchDetailsTask task = new FetchDetailsTask();
 
-                            for (int i = 0; i < array.length(); i++) {
+            String jsonpData = task.execute(url).get();
+            String jsonData = jsonpData.substring(jsonpData.indexOf("(") + 1, jsonpData.lastIndexOf(")"));
 
-                                JSONObject json = array.getJSONObject(i);
+            String json = convertJSONString(jsonData);
 
-                                String timestamp = json.getString("Timestamp");
-                                String closeAmount = json.getString("close");
-                            }
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
+            Log.i("PARSE DATA ", json);
 
+            JSONObject jsonObject = new JSONObject(json);
+            JSONArray array = jsonObject.getJSONArray("series");
+
+            for (int i = 0; i < array.length(); i++) {
+
+                JSONObject series = array.getJSONObject(i);
+                String timestamp = series.getString("Timestamp");
+                String closeAmount = series.getString("close");
+
+                Entry data = new Entry(Float.parseFloat(closeAmount), i);
+                mEntries.add(data);
+
+                mLabels.add(timestamp);
+            }
+
+            LineDataSet dataSet = new LineDataSet(mEntries, "5");
+            dataSet.setAxisDependency(YAxis.AxisDependency.LEFT);
+
+            LineData data = new LineData(mLabels, dataSet);
+
+            chart.setData(data);
+            chart.setDescription(getString(R.string.graph_description));
+
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static String convertJSONString(String jsonData) {
+        jsonData = jsonData.replaceAll("/n", "");
+
+        return jsonData;
+    }
+
+    public class FetchDetailsTask extends AsyncTask<String, Void, String> {
+
+        @Override
+        protected String doInBackground(String... urls) {
+
+            HttpURLConnection urlConnection = null;
+            String result = null;
+            BufferedReader bufferedReader = null;
+
+            try {
+
+                URL url = new URL(urls[0]);
+
+                urlConnection = (HttpURLConnection) url.openConnection();
+                urlConnection.connect();
+
+                InputStream inputStream = urlConnection.getInputStream();
+
+                InputStreamReader reader = new InputStreamReader(inputStream);
+
+                bufferedReader = new BufferedReader(reader);
+
+                StringBuffer stringBuffer = new StringBuffer();
+
+                String line;
+                while ((line = bufferedReader.readLine()) != null) {
+
+                    stringBuffer.append(line + "/n");
+                }
+
+                while (stringBuffer.length() == 0) {
+
+                    //empty string no reason to parse
+                    Log.i("StringBuffer", "Empty");
+                    return null;
+                }
+
+                result = stringBuffer.toString();
+            }
+            catch(MalformedURLException e){
+                e.printStackTrace();
+            }
+            catch (IOException e ){
+                e.printStackTrace();
+            }
+            finally {
+
+                if (urlConnection != null) {
+
+                    urlConnection.disconnect();
+                }
+                if (bufferedReader != null) {
+
+                    try {
+                        bufferedReader.close();
+
+                    } catch (IOException e) {
+                        e.printStackTrace();
                     }
-                },
-                new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
+                }
+            }
+            try{
+                return result;
+            }
+            catch(Exception e){
+                e.printStackTrace();
+            }
+            return null;
+        }
 
-                        error.printStackTrace();
-                    }
-                });
-        mRequestQueue.add(request);
+        @Override
+        public void onPostExecute(String url){
+
+        }
     }
 }
 

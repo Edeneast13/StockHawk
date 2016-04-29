@@ -31,4 +31,6 @@
     <!-- the title of the details activity shown to the user on the action bar-->
     <string name="title_activity_stock_detail">Stock Details</string>
     <string name="title_activity_detail">DetailActivity</string>
+    <!-- visible to the user when they view the line graph of detailed stock data-->
+    <string name="graph_description">Stock variation over 1 day</string>
 </resources>
