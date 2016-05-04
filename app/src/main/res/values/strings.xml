@@ -33,4 +33,6 @@
     <string name="title_activity_detail">DetailActivity</string>
     <!-- visible to the user when they view the line graph of detailed stock data-->
     <string name="graph_description">Stock variation over 1 day</string>
+    <string name="appwidget_text">Stock Values</string>
+    <string name="add_widget">Add widget</string>
 </resources>
