@@ -2,7 +2,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 xmlns:tools="http://schemas.android.com/tools"
-                android:background="#09C"
+                android:background="#000000"
                 android:padding="@dimen/widget_margin"
                 android:orientation="vertical">
 
@@ -13,7 +13,7 @@
         android:layout_centerHorizontal="true"
         android:layout_centerVertical="true"
         android:layout_margin="8dp"
-        android:background="#09C"
+        android:background="#000000"
         android:contentDescription="@string/appwidget_text"
         android:text="@string/appwidget_text"
         android:textColor="#ffffff"
@@ -24,6 +24,8 @@
         android:id="@+id/widget_listview"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:divider="@null"
+        android:dividerHeight="0dp"
         tools:listitem="@layout/list_item_quote"/>
 
 </LinearLayout>

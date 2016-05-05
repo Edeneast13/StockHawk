@@ -38,6 +38,12 @@
         </service>
         <service android:name=".service.StockIntentService"/>
 
+        <service
+            android:name=".service.StockWidgetService"
+            android:enabled="true"
+            android:exported="false"
+            android:permission="android.permission.BIND_REMOTEVIEWS"/>
+
         <provider
             android:name=".data.generated.QuoteProvider"
             android:authorities="com.sam_chordas.android.stockhawk.data.QuoteProvider"

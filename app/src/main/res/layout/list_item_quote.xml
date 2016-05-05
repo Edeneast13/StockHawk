@@ -9,6 +9,7 @@
     android:paddingRight="16dp"
     android:paddingStart="16dp"
     android:paddingEnd="16dp"
+    android:background="@drawable/touch_selector_dark"
     >
   <TextView
       android:id="@+id/stock_symbol"

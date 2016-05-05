@@ -2,6 +2,8 @@ package com.sam_chordas.android.stockhawk.service;
 
 import android.content.Intent;
 import android.database.Cursor;
+import android.os.Binder;
+import android.widget.AdapterView;
 import android.widget.RemoteViews;
 import android.widget.RemoteViewsService;
 
@@ -19,7 +21,7 @@ public class StockWidgetService extends RemoteViewsService {
 
         return new RemoteViewsFactory() {
 
-            private Cursor cursor;
+            private Cursor cursor = null;
             private String symbol = "";
             private String bidPrice = "";
             private String change = "";
@@ -33,22 +35,27 @@ public class StockWidgetService extends RemoteViewsService {
             @Override
             public void onDataSetChanged() {
 
+                if(cursor != null){
+                    cursor.close();
+                }
+
+                final long identityToken = Binder.clearCallingIdentity();
 
                 cursor = getContentResolver()
                         .query(QuoteProvider.Quotes.CONTENT_URI,
                         new String[]{
                                 QuoteColumns._ID,
-                                QuoteColumns.BIDPRICE,
-                                QuoteColumns.CHANGE,
-                                QuoteColumns.ISUP,
                                 QuoteColumns.SYMBOL,
-                                QuoteColumns.PERCENT_CHANGE
+                                QuoteColumns.BIDPRICE,
+                                QuoteColumns.PERCENT_CHANGE,
+                                QuoteColumns.CHANGE,
+                                QuoteColumns.ISUP
                         },
-                                QuoteColumns.ISCURRENT,
+                                QuoteColumns.ISCURRENT + " = ?",
                         new String[]{"1"},
                         null);
 
-                cursor.close();
+                Binder.restoreCallingIdentity(identityToken);
             }
 
             @Override
@@ -59,11 +66,16 @@ public class StockWidgetService extends RemoteViewsService {
 
             @Override
             public int getCount() {
-                return 0;
+                return cursor == null ? 0 : cursor.getCount();
             }
 
             @Override
             public RemoteViews getViewAt(int position) {
+
+                if (position == AdapterView.INVALID_POSITION ||
+                        cursor == null || !cursor.moveToPosition(position)) {
+                    return null;
+                }
 
                 RemoteViews remoteViews = new RemoteViews(getPackageName(), R.layout.list_item_quote);
 
@@ -82,9 +94,8 @@ public class StockWidgetService extends RemoteViewsService {
                 }
                 else{
 
-                    remoteViews.setInt(R.id.change, "setBackgroundResouce", R.drawable.percent_change_pill_red);
+                    remoteViews.setInt(R.id.change, "setBackgroundResource", R.drawable.percent_change_pill_red);
                 }
-
 
                 return remoteViews;
             }
@@ -96,12 +107,14 @@ public class StockWidgetService extends RemoteViewsService {
 
             @Override
             public int getViewTypeCount() {
-                return 0;
+                return 4;
             }
 
             @Override
             public long getItemId(int position) {
-                return 0;
+                if (cursor.moveToPosition(position))
+                    return cursor.getLong(cursor.getColumnIndexOrThrow(QuoteColumns._ID));
+                return position;
             }
 
             @Override
