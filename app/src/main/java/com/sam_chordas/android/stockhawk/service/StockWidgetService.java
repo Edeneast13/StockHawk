@@ -35,11 +35,11 @@ public class StockWidgetService extends RemoteViewsService {
             @Override
             public void onDataSetChanged() {
 
+                final long callingIdentity = Binder.clearCallingIdentity();
+
                 if(cursor != null){
                     cursor.close();
                 }
-
-                final long identityToken = Binder.clearCallingIdentity();
 
                 cursor = getContentResolver()
                         .query(QuoteProvider.Quotes.CONTENT_URI,
@@ -55,7 +55,7 @@ public class StockWidgetService extends RemoteViewsService {
                         new String[]{"1"},
                         null);
 
-                Binder.restoreCallingIdentity(identityToken);
+                Binder.restoreCallingIdentity(callingIdentity);
             }
 
             @Override
@@ -96,6 +96,10 @@ public class StockWidgetService extends RemoteViewsService {
 
                     remoteViews.setInt(R.id.change, "setBackgroundResource", R.drawable.percent_change_pill_red);
                 }
+
+                final Intent intent = new Intent();
+                intent.putExtra("symbol", symbol);
+                remoteViews.setOnClickFillInIntent(R.layout.list_item_quote, intent);
 
                 return remoteViews;
             }

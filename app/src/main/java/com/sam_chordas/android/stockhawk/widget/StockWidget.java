@@ -1,14 +1,17 @@
 package com.sam_chordas.android.stockhawk.widget;
 
 import android.app.PendingIntent;
+import android.app.TaskStackBuilder;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProvider;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
 import android.widget.RemoteViews;
 
 import com.sam_chordas.android.stockhawk.R;
 import com.sam_chordas.android.stockhawk.service.StockWidgetService;
+import com.sam_chordas.android.stockhawk.ui.DetailActivity;
 import com.sam_chordas.android.stockhawk.ui.MyStocksActivity;
 
 /**
@@ -25,10 +28,23 @@ public class StockWidget extends AppWidgetProvider {
         views.setTextViewText(R.id.appwidget_text, widgetText);
         views.setRemoteAdapter(R.id.widget_listview, new Intent(context, StockWidgetService.class));
 
-        Intent intent = new Intent(context, MyStocksActivity.class);
-        PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, 0);
+        int currentApiVersion = Build.VERSION.SDK_INT;
 
-        views.setOnClickPendingIntent(R.id.appwidget_text, pendingIntent);
+        if(currentApiVersion > Build.VERSION_CODES.ICE_CREAM_SANDWICH){
+
+            Intent intent = new Intent(context, DetailActivity.class);
+            PendingIntent pendingIntent = TaskStackBuilder.create(context)
+                    .addNextIntentWithParentStack(intent)
+                    .getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
+
+            views.setPendingIntentTemplate(R.id.widget_listview, pendingIntent);
+        }
+        else{
+
+            Intent intent = new Intent(context, MyStocksActivity.class);
+            PendingIntent pendingIntent = PendingIntent.getActivity(context, 0, intent, 0);
+            views.setOnClickPendingIntent(R.id.appwidget_text, pendingIntent);
+        }
 
         // Instruct the widget manager to update the widget
         appWidgetManager.updateAppWidget(appWidgetId, views);
