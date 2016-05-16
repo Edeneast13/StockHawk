@@ -1,4 +1,4 @@
-# Udacity P3: StockHawk
+StockHawk
 
 StockHawk is an app created by Udacity for the Android Developer Nanodegree. It displays a list of stocks to the user and
 users can add or remove stocks as desired. This project required for features to be added, and current features to be improved
